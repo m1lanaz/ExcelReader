@@ -100,8 +100,8 @@ namespace ExcelReader
                     connection.Open();
 
                     // Query to create the table with columns and their datatype with an autoincrement ID
-                    string columnsDefinition = string.Join(", ", columnNames.Select(col => $"{col} NVARCHAR(MAX)"));
-                    columnsDefinition += ", ID INT IDENTITY(1,1)";
+                    string columnsDefinition = "ID INT IDENTITY(1,1),";
+                    columnsDefinition += string.Join(", ", columnNames.Select(col => $"{col} NVARCHAR(MAX)"));
 
                     string createQuery = $"CREATE TABLE ExcelData ({columnsDefinition})";
 
@@ -143,6 +143,7 @@ namespace ExcelReader
             {
                 using (var package = new ExcelPackage(new FileInfo(filePath)))
                 {
+                    //Only takes the first worksheet
                     var worksheet = package.Workbook.Worksheets.First();
 
                     var dimension = worksheet.Dimension;
@@ -165,7 +166,6 @@ namespace ExcelReader
                                 {
                                     command.Parameters.AddWithValue($"@Param{col}", worksheet.Cells[row, col].Text);
                                 }
-
                                 command.ExecuteNonQuery();
                             }
                         }
