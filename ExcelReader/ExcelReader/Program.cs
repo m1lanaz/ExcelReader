@@ -15,6 +15,7 @@ namespace ExcelReader
 
         static void Main(string[] args)
         {
+
             // Set the license context
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
@@ -90,7 +91,7 @@ namespace ExcelReader
             }
         }
 
-        static void CreateTable (string[] columnNames)
+        static void CreateTable(string[] columnNames)
         {
             try
             {
@@ -98,22 +99,26 @@ namespace ExcelReader
                 {
                     connection.Open();
 
-                    // Query to create the table with columns and their datatype
-                    string createQuery = $"CREATE TABLE ExcelData (" +
-                                         string.Join(", ", columnNames.Select(col => $"{col} NVARCHAR(MAX)")) + 
-                                         ")";
+                    // Query to create the table with columns and their datatype with an autoincrement ID
+                    string columnsDefinition = string.Join(", ", columnNames.Select(col => $"{col} NVARCHAR(MAX)"));
+                    columnsDefinition += ", ID INT IDENTITY(1,1)";
+
+                    string createQuery = $"CREATE TABLE ExcelData ({columnsDefinition})";
 
                     using (SqlCommand command = new SqlCommand(createQuery, connection))
                     {
                         command.ExecuteNonQuery();
                     }
                 }
+
+                Console.WriteLine("Table ExcelData has been created successfully.");
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error: " + ex.Message);
             }
         }
+
 
         static string[] GetExcelColumnNames(string filePath)
         {
