@@ -30,12 +30,14 @@ namespace ExcelReader
 
                 if (tableExists)
                 {
-                    //DeleteTable();
+                    DeleteTable();
                 }
 
                 string[] columnList = GetExcelColumnNames(filePath);
 
                 CreateTable(columnList);
+
+                InsertExcelDataIntoTable(filePath, columnList);
             }
         }
 
@@ -129,5 +131,49 @@ namespace ExcelReader
                 return columnNames;
             }
         }
+
+        static void InsertExcelDataIntoTable(string filePath, string[] columnNames)
+        {
+            try
+            {
+                using (var package = new ExcelPackage(new FileInfo(filePath)))
+                {
+                    var worksheet = package.Workbook.Worksheets.First();
+
+                    var dimension = worksheet.Dimension;
+
+                    int columns = dimension.Columns;
+
+                    string parameterPlaceholders = string.Join(", ", Enumerable.Range(1, columns).Select(i => $"@Param{i}"));
+
+                    using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                        connection.Open();
+
+                        for (int row = 2; row <= dimension.Rows; row++)
+                        {
+                            string insertQuery = $"INSERT INTO ExcelData ({string.Join(", ", columnNames)}) VALUES ({parameterPlaceholders})";
+
+                            using (SqlCommand command = new SqlCommand(insertQuery, connection))
+                            {
+                                for (int col = 1; col <= columns; col++)
+                                {
+                                    command.Parameters.AddWithValue($"@Param{col}", worksheet.Cells[row, col].Text);
+                                }
+
+                                command.ExecuteNonQuery();
+                            }
+                        }
+                    }
+
+                    Console.WriteLine("Data inserted successfully.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.Message);
+            }
+        }
+
     }
 }
