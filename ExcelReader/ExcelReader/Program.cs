@@ -9,12 +9,15 @@ namespace ExcelReader
     internal class Program
     {
         //Filepath to excel
-        public static string filePath = "";
+        public static string filePath = "C:\\Users\\Milana\\Documents\\Test.xlsx";
 
         public static string connectionString = "";
 
         static void Main(string[] args)
         {
+            // Set the license context
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
             // Load connection string out of ENV
             string envFilePath = @"C:\Users\Milana\Documents\ExcelReader\.env";
             DotNetEnv.Env.Load(envFilePath);
@@ -27,11 +30,12 @@ namespace ExcelReader
 
                 if (tableExists)
                 {
-                    DeleteTable();
+                    //DeleteTable();
                 }
 
                 string[] columnList = GetExcelColumnNames(filePath);
 
+                CreateTable(columnList);
             }
         }
 
@@ -84,7 +88,7 @@ namespace ExcelReader
             }
         }
 
-        static void CreateTable ()
+        static void CreateTable (string[] columnNames)
         {
             try
             {
@@ -92,9 +96,12 @@ namespace ExcelReader
                 {
                     connection.Open();
 
-                    string query = $"CREATE TABLE ExcelData (ID INT PRIMARY KEY)";
+                    // Query to create the table with columns and their datatype
+                    string createQuery = $"CREATE TABLE ExcelData (" +
+                                         string.Join(", ", columnNames.Select(col => $"{col} NVARCHAR(MAX)")) + 
+                                         ")";
 
-                    using (SqlCommand command = new SqlCommand(query, connection))
+                    using (SqlCommand command = new SqlCommand(createQuery, connection))
                     {
                         command.ExecuteNonQuery();
                     }
